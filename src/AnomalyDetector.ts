@@ -159,5 +159,6 @@ async function checkForAnomalies() {
 
 export function startAnomalyDetector() {
     console.log('🕵️‍♀️ Anomaly Detector Cron Job scheduled to run every hour.');
-    cron.schedule('0 * * * *', checkForAnomalies);
+    // cron.schedule('0 * * * *', checkForAnomalies);
+    cron.schedule('* * * * *', checkForAnomalies);
 }
