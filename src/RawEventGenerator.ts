@@ -9,28 +9,19 @@ function generateEventValue(eventType: EventType) {
   switch (eventType) {
     case 'ENGINE_STATUS':
       const status = faker.helpers.arrayElement(['IDLE', 'RUNNING', 'OFF']);
-      return {
-        status,
-        rpm: status === 'RUNNING' ? faker.number.int({ min: 1200, max: 2500 }) : faker.number.int({ min: 700, max: 900 }),
-      };
+      return { status, rpm: status === 'RUNNING' ? faker.number.int({ min: 1200, max: 2500 }) : faker.number.int({ min: 700, max: 900 }) };
     case 'FUEL_LEVEL':
-      return {
-        level: faker.number.float({ min: 5, max: 100, fractionDigits: 1 }),
-      };
+      return { level: faker.number.float({ min: 5, max: 100, fractionDigits: 1 }) };
     case 'LOCATION_UPDATE':
-      return {
-        lat: faker.location.latitude({ min: 12.8, max: 13.0 }),
-        long: faker.location.longitude({ min: 79.0, max: 79.2 }),
-      };
+      return { lat: faker.location.latitude({ min: 12.8, max: 13.0 }), long: faker.location.longitude({ min: 79.0, max: 79.2 }) };
     case 'ENGINE_TEMP':
-      return {
-        temp: faker.number.int({ min: 85, max: 105 }),
-      };
+      return { temp: faker.number.int({ min: 85, max: 105 }) };
     case 'DIAGNOSTIC_CODE':
-      return {
-        code: `P${faker.string.alphanumeric(4).toUpperCase()}`,
-        severity: faker.helpers.arrayElement(['LOW', 'MEDIUM', 'HIGH']),
-      };
+      return { code: `P${faker.string.alphanumeric(4).toUpperCase()}`, severity: faker.helpers.arrayElement(['LOW', 'MEDIUM', 'HIGH']) };
+    case 'PAYLOAD_CYCLE':
+      return { payloadTonnes: faker.number.float({ min: 15, max: 25, fractionDigits: 1 }), cycleTimeSeconds: faker.number.int({ min: 60, max: 120 }) };
+    case 'HYDRAULIC_PRESSURE':
+      return { pressurePsi: faker.number.int({ min: 2500, max: 3500 }) };
     default:
       return {};
   }

@@ -8,11 +8,11 @@ datasource db {
 }
 
 model Client {
-  clientId       String              @id @default(cuid())
-  name           String
-  email          String              @unique
-  phone          String?
-  contracts      Contract[]
+  clientId  String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  phone     String?
+  contracts Contract[]
 }
 
 model EquipmentType {
@@ -23,11 +23,11 @@ model EquipmentType {
 }
 
 model Equipment {
-  equipmentId       String              @id @default(cuid())
-  status            String              @default("available")
-  equipmentType     EquipmentType       @relation(fields: [equipmentTypeId], references: [id])
-  equipmentTypeId   String
-  lineItems         LineItem[]
+  equipmentId     String        @id @default(cuid())
+  status          String        @default("available")
+  equipmentType   EquipmentType @relation(fields: [equipmentTypeId], references: [id])
+  equipmentTypeId String
+  lineItems       LineItem[]
 }
 
 model Contract {
@@ -41,18 +41,18 @@ model Contract {
 }
 
 model LineItem {
-  lineItemId       String    @id @default(cuid())
-  startDate        DateTime
-  endDate          DateTime
+  lineItemId       String         @id @default(cuid())
+  startDate        DateTime?
+  endDate          DateTime?
   totalEngineHours Float?
   fuelUsage        Float?
   downtimeHours    Float?
   operatingDays    Int?
-  contract         Contract  @relation(fields: [contractId], references: [contractId])
+  contract         Contract       @relation(fields: [contractId], references: [contractId])
   contractId       String
-  equipment        Equipment @relation(fields: [equipmentId], references: [equipmentId])
+  equipment        Equipment      @relation(fields: [equipmentId], references: [equipmentId])
   equipmentId      String
-  operator         Operator? @relation(fields: [lastOperatorId], references: [operatorId])
+  operator         Operator?      @relation(fields: [lastOperatorId], references: [operatorId])
   lastOperatorId   String?
   usage            LineItemUsage?
 }
@@ -80,6 +80,8 @@ enum EventType {
   LOCATION_UPDATE
   ENGINE_TEMP
   DIAGNOSTIC_CODE
+  PAYLOAD_CYCLE
+  HYDRAULIC_PRESSURE
 }
 
 model RawEventLog {
@@ -92,15 +94,19 @@ model RawEventLog {
 }
 
 model LineItemUsage {
-  id                   String   @id @default(cuid())
-  totalEngineHours     Float    @default(0)
-  totalIdleHours       Float    @default(0)
-  workingHours         Float    @default(0)
-  fuelConsumed         Float    @default(0)
-  distanceTraveled     Float?   @default(0)
-  highEngineTempAlerts Int      @default(0)
-  suddenFuelDrops      Int      @default(0)
-  diagnosticErrors     Int      @default(0)
-  lineItem             LineItem @relation(fields: [lineItemId], references: [lineItemId])
-  lineItemId           String   @unique // This creates the one-to-one relationship
+  id String @id @default(cuid())
+
+  totalEngineHours Float @default(0)
+  totalIdleHours   Float @default(0)
+  fuelConsumed     Float @default(0)
+
+  workingHours        Float  @default(0)
+  workingToIdleRatio  Float  @default(0)
+  fuelBurnRate        Float  @default(0) // Liters per working hour
+  distanceTraveled    Float? @default(0)
+  payloadMovedTonnes  Float? @default(0)
+  avgCycleTimeSeconds Float? @default(0)
+
+  lineItem   LineItem @relation(fields: [lineItemId], references: [lineItemId])
+  lineItemId String   @unique
 }
