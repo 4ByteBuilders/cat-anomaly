@@ -110,7 +110,7 @@ async function processRawLogs() {
 /**
  * Starts the cron job to process logs every 3 hours.
  */
-export function startFogProcessor() {
+export function startRawLogProcessor() {
   console.log('🌫️ Fog Processor Cron Job scheduled to run every 3 hours.');
   // Cron schedule for every 3 hours: '0 */3 * * *'
   cron.schedule('0 */3 * * *', processRawLogs);
