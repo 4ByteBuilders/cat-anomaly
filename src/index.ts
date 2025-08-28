@@ -1,7 +1,5 @@
-import { startLogGeneration } from './RawEventGenerator';
-import { startRawLogProcessor } from './UsageStatisticsAggregator';
-
-// ... other imports for your application (e.g., Express)
+import { startLogGeneration } from "./RawEventGenerator.js";
+import { startRawLogProcessor } from "./UsageStatisticsAggregator.js";
 
 async function main() {
   // --- Start the background job ---

@@ -1,6 +1,6 @@
 import { EventType } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import { prisma } from './lib/prismaClient';
+import { prisma } from './lib/prismaClient.js';
 
 // Helper function to create a delay in milliseconds
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

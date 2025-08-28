@@ -1,6 +1,6 @@
 import { RawEventLog } from '@prisma/client';
 import cron from 'node-cron';
-import { prisma } from './lib/prismaClient';
+import { prisma } from './lib/prismaClient.js';
 
 /**
  * The main job function that fetches raw logs, processes them into advanced
