@@ -79,6 +79,3 @@ export async function startLogGeneration() {
     }
   }
 }
-
-// Remove the direct call to main()
-// You can now import and call startLogGeneration() from index.ts
