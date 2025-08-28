@@ -1,3 +1,4 @@
+import { startAnomalyDetector } from "./AnomalyDetector.js";
 import { startLogGeneration } from "./RawEventGenerator.js";
 import { startRawLogProcessor } from "./UsageStatisticsAggregator.js";
 
@@ -5,6 +6,7 @@ async function main() {
   // --- Start the background job ---
   startLogGeneration();
   startRawLogProcessor();
+  startAnomalyDetector();
   // --- Start your main application logic here ---
   // For example, Express server setup
   console.log('✅ Main application has started.');
