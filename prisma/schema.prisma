@@ -20,6 +20,7 @@ model EquipmentType {
   name             String        @unique
   equipment        Equipment[]
   waitingListItems WaitingList[]
+  demandForecasts  DemandForecast[] 
 }
 
 model Equipment {
@@ -55,6 +56,7 @@ model LineItem {
   operator         Operator?      @relation(fields: [lastOperatorId], references: [operatorId])
   lastOperatorId   String?
   usage            LineItemUsage?
+  anomalies        AnomalyLog[]
 }
 
 model Operator {
@@ -102,11 +104,59 @@ model LineItemUsage {
 
   workingHours        Float  @default(0)
   workingToIdleRatio  Float  @default(0)
-  fuelBurnRate        Float  @default(0) // Liters per working hour
+  fuelBurnRate        Float  @default(0)
   distanceTraveled    Float? @default(0)
   payloadMovedTonnes  Float? @default(0)
   avgCycleTimeSeconds Float? @default(0)
 
   lineItem   LineItem @relation(fields: [lineItemId], references: [lineItemId])
   lineItemId String   @unique
+}
+
+model DemandForecast {
+  id               String        @id @default(cuid())
+  equipmentTypeId  String
+  month            DateTime
+  forecastedDemand Int
+  createdAt        DateTime      @default(now())
+  
+  // Relation to EquipmentType
+  equipmentType    EquipmentType @relation(fields: [equipmentTypeId], references: [id])
+  
+  @@index([equipmentTypeId, month])
+}
+
+enum AnomalySeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AnomalyStatus {
+  UNRESOLVED
+  RESOLVED
+}
+
+enum AnomalyType {
+  POOR_WORKING_TO_IDLE_RATIO
+  HIGH_FUEL_BURN_RATE
+  SLOW_CYCLE_TIME
+  GEOFENCE_BREACH
+  AFTER_HOURS_OPERATION
+  SUDDEN_FUEL_DROP
+  HIGH_ENGINE_TEMP
+  FREQUENT_DIAGNOSTIC_ERRORS
+  MISSED_MAINTENANCE_WINDOW
+}
+
+model AnomalyLog {
+  id          String          @id @default(cuid())
+  timestamp   DateTime        @default(now())
+  anomalyType AnomalyType
+  severity    AnomalySeverity
+  status      AnomalyStatus   @default(UNRESOLVED)
+  details     Json
+
+  lineItem   LineItem @relation(fields: [lineItemId], references: [lineItemId])
+  lineItemId String
 }
