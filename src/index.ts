@@ -4,7 +4,7 @@ import { startRawLogProcessor } from "./UsageStatisticsAggregator.js";
 
 async function main() {
   // --- Start the background job ---
-  // startLogGeneration(); //comment out when doing actual thing
+  startLogGeneration(); //comment out when doing actual thing
   startRawLogProcessor();
   startAnomalyDetector();
   // --- Start your main application logic here ---

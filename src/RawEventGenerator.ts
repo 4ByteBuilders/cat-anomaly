@@ -5,23 +5,76 @@ import { prisma } from './lib/prismaClient.js';
 // Helper function to create a delay in milliseconds
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function generateEventValue(eventType: EventType) {
+// --- Stateful device context ---
+type EquipmentState = {
+  status: 'IDLE' | 'RUNNING' | 'OFF';
+  rpm: number;
+  fuelLevel: number;
+  lat: number;
+  long: number;
+  temp: number;
+  hydraulicPressure: number;
+};
+
+const initialState = (): EquipmentState => ({
+  status: 'IDLE',
+  rpm: 750,
+  fuelLevel: faker.number.float({ min: 200, max: 400, fractionDigits: 1 }), // Large tank
+  lat: faker.location.latitude({ min: 12.900, max: 12.910 }), // Small site boundary
+  long: faker.location.longitude({ min: 79.100, max: 79.110 }),
+  temp: faker.number.int({ min: 75, max: 90 }), // Engine temp
+  hydraulicPressure: faker.number.int({ min: 3000, max: 4500 }), // psi
+});
+
+function updateState(state: EquipmentState): EquipmentState {
+  // Simulate status transitions
+  const statusTransition = faker.helpers.arrayElement(['IDLE', 'RUNNING', 'OFF']);
+  state.status = statusTransition;
+
+  // RPM based on status
+  state.rpm = state.status === 'RUNNING'
+    ? faker.number.int({ min: 1200, max: 2200 })
+    : faker.number.int({ min: 600, max: 900 });
+
+  // Fuel consumption if running
+  if (state.status === 'RUNNING') {
+    state.fuelLevel = Math.max(0, state.fuelLevel - faker.number.float({ min: 1.0, max: 5.0, fractionDigits: 2 }));
+  } else if (state.status === 'IDLE') {
+    state.fuelLevel = Math.max(0, state.fuelLevel - faker.number.float({ min: 0.2, max: 1.0, fractionDigits: 2 }));
+  }
+
+  // Location drift (simulate small movement within site)
+  state.lat = Math.min(12.910, Math.max(12.900, state.lat + faker.number.float({ min: -0.0002, max: 0.0002, fractionDigits: 6 })));
+  state.long = Math.min(79.110, Math.max(79.100, state.long + faker.number.float({ min: -0.0002, max: 0.0002, fractionDigits: 6 })));
+
+  // Temperature changes
+  state.temp = Math.min(110, Math.max(70, state.temp + faker.number.int({ min: -2, max: 3 })));
+
+  // Hydraulic pressure fluctuation
+  state.hydraulicPressure = Math.min(5000, Math.max(2500, state.hydraulicPressure + faker.number.int({ min: -50, max: 50 })));
+
+  return state;
+}
+
+function generateEventValue(eventType: EventType, state: EquipmentState) {
   switch (eventType) {
     case 'ENGINE_STATUS':
-      const status = faker.helpers.arrayElement(['IDLE', 'RUNNING', 'OFF']);
-      return { status, rpm: status === 'RUNNING' ? faker.number.int({ min: 1200, max: 2500 }) : faker.number.int({ min: 700, max: 900 }) };
+      return { status: state.status, rpm: state.rpm };
     case 'FUEL_LEVEL':
-      return { level: faker.number.float({ min: 5, max: 100, fractionDigits: 1 }) };
+      return { level: state.fuelLevel };
     case 'LOCATION_UPDATE':
-      return { lat: faker.location.latitude({ min: 12.8, max: 13.0 }), long: faker.location.longitude({ min: 79.0, max: 79.2 }) };
+      return { lat: state.lat, long: state.long };
     case 'ENGINE_TEMP':
-      return { temp: faker.number.int({ min: 85, max: 105 }) };
+      return { temp: state.temp };
     case 'DIAGNOSTIC_CODE':
       return { code: `P${faker.string.alphanumeric(4).toUpperCase()}`, severity: faker.helpers.arrayElement(['LOW', 'MEDIUM', 'HIGH']) };
     case 'PAYLOAD_CYCLE':
-      return { payloadTonnes: faker.number.float({ min: 15, max: 25, fractionDigits: 1 }), cycleTimeSeconds: faker.number.int({ min: 60, max: 120 }) };
+      return {
+        payloadTonnes: faker.number.float({ min: 5, max: 40, fractionDigits: 1 }),
+        cycleTimeSeconds: faker.number.int({ min: 30, max: 180 })
+      };
     case 'HYDRAULIC_PRESSURE':
-      return { pressurePsi: faker.number.int({ min: 2500, max: 3500 }) };
+      return { pressurePsi: state.hydraulicPressure };
     default:
       return {};
   }
@@ -32,6 +85,9 @@ export async function startLogGeneration() {
   console.log('🚀 Starting Edge Simulator Job...');
   console.log('This will run continuously to generate raw event logs.');
   console.log('Press Ctrl+C to stop.');
+
+  // Map to hold state for each equipment
+  const equipmentStates: Record<string, EquipmentState> = {};
 
   while (true) {
     try {
@@ -47,12 +103,23 @@ export async function startLogGeneration() {
         continue;
       }
 
+      // Pick a random equipment
       const randomEquipment = faker.helpers.arrayElement(rentedEquipment);
+
+      // Initialize state if not present
+      if (!equipmentStates[randomEquipment.equipmentId]) {
+        equipmentStates[randomEquipment.equipmentId] = initialState();
+      }
+
+      // Update state for this equipment
+      const state = updateState(equipmentStates[randomEquipment.equipmentId]);
+
+      // Pick a random event type
       const randomEventType = faker.helpers.arrayElement(Object.values(EventType));
       const eventData = {
         equipmentId: randomEquipment.equipmentId,
         eventType: randomEventType,
-        value: generateEventValue(randomEventType),
+        value: generateEventValue(randomEventType, state),
       };
 
       await prisma.rawEventLog.create({
